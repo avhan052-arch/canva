@@ -129,6 +129,40 @@
         </div>
     </div>
 
+    <!-- Admin Seat Manager Modal -->
+    <div id="adminSeatModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-8 max-w-3xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">Atur Kursi Pemesanan</h2>
+                <button onclick="document.getElementById('adminSeatModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div id="adminSeatBookingInfo" class="bg-gray-50 rounded-lg p-4 mb-6 text-sm"></div>
+
+            <div class="mb-4">
+                <div class="flex justify-center mb-4 text-sm text-gray-600">
+                    <div class="flex items-center mr-4"><div class="seat available mr-2"></div><span>Tersedia</span></div>
+                    <div class="flex items-center mr-4"><div class="seat selected mr-2"></div><span>Dipilih</span></div>
+                    <div class="flex items-center"><div class="seat occupied mr-2"></div><span>Terisi</span></div>
+                </div>
+                <div id="adminFullSeatMap" class="grid grid-cols-12 gap-2 max-w-4xl mx-auto mb-4"></div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">Kursi terpilih: <span id="adminSelectedSeats" class="font-semibold">-</span></p>
+                    <p class="text-xs text-gray-500 mt-1">Pilih kursi sesuai jumlah penumpang (<span id="adminRequiredSeats">0</span>)</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button id="adminSaveSeats" class="flex-1 gradient-bg text-white py-2 rounded-lg font-medium hover:opacity-90 transition">
+                    Simpan Kursi
+                </button>
+                <button onclick="document.getElementById('adminSeatModal').classList.add('hidden')" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-400 transition">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
         <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
@@ -2874,11 +2908,122 @@
                             <button onclick="deleteAdminBooking('${booking.id}')" class="text-red-600 hover:text-red-900 text-xs">
                                 <i class="fas fa-trash mr-1"></i>Hapus
                             </button>
+                            <button onclick="openAdminSeatManager('${booking.id}')" class="text-purple-600 hover:text-purple-900 text-xs">
+                                <i class="fas fa-chair mr-1"></i>Atur Kursi
+                            </button>
                         </div>
                     </td>
                 </tr>
             `).join('');
         }
+
+        // Admin Seat Management
+        let adminSeatContext = { bookingId: null, required: 0, selected: [], occupiedSnapshot: [] };
+
+        function openAdminSeatManager(bookingId) {
+            const booking = bookings.find(b => b.id === bookingId);
+            if (!booking) return;
+
+            adminSeatContext.bookingId = bookingId;
+            adminSeatContext.required = booking.passengers ? booking.passengers.length : (booking.tickets || 1);
+            adminSeatContext.selected = (booking.seats && booking.seats.slice()) || [];
+            adminSeatContext.occupiedSnapshot = occupiedSeats.slice();
+
+            const info = document.getElementById('adminSeatBookingInfo');
+            info.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <div><span class="text-gray-600">Booking:</span> <span class="font-semibold ml-2">${booking.id}</span></div>
+                        <div><span class="text-gray-600">Penumpang/Pemesan:</span> <span class="font-semibold ml-2">${booking.passenger || (booking.booker ? booking.booker.name : '-')}</span></div>
+                        <div><span class="text-gray-600">Jumlah Penumpang:</span> <span class="font-semibold ml-2">${adminSeatContext.required}</span></div>
+                    </div>
+                    <div>
+                        <div><span class="text-gray-600">Ferry:</span> <span class="font-semibold ml-2">${booking.ferry}</span></div>
+                        <div><span class="text-gray-600">Rute:</span> <span class="font-semibold ml-2">${booking.route}</span></div>
+                        <div><span class="text-gray-600">Tanggal:</span> <span class="font-semibold ml-2">${booking.date || '-'}</span></div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('adminRequiredSeats').textContent = adminSeatContext.required;
+            document.getElementById('adminSelectedSeats').textContent = adminSeatContext.selected.length ? adminSeatContext.selected.join(', ') : '-';
+
+            renderAdminSeatMap();
+            document.getElementById('adminSeatModal').classList.remove('hidden');
+        }
+
+        function renderAdminSeatMap() {
+            const grid = document.getElementById('adminFullSeatMap');
+            grid.innerHTML = '';
+            const rows = ['A','B','C','D','E','F','G','H','I','J'];
+            for (let r = 0; r < rows.length; r++) {
+                for (let c = 1; c <= 12; c++) {
+                    const seatNumber = `${rows[r]}${c}`;
+                    const seat = document.createElement('div');
+                    seat.className = 'seat';
+                    seat.dataset.seat = seatNumber;
+                    seat.textContent = seatNumber;
+
+                    if (adminSeatContext.occupiedSnapshot.includes(seatNumber) && !adminSeatContext.selected.includes(seatNumber)) {
+                        seat.classList.add('occupied');
+                    } else if (adminSeatContext.selected.includes(seatNumber)) {
+                        seat.classList.add('selected');
+                        seat.addEventListener('click', () => toggleAdminSeat(seatNumber));
+                    } else {
+                        seat.classList.add('available');
+                        seat.addEventListener('click', () => toggleAdminSeat(seatNumber));
+                    }
+
+                    grid.appendChild(seat);
+                }
+            }
+        }
+
+        function toggleAdminSeat(seatNumber) {
+            const isSelected = adminSeatContext.selected.includes(seatNumber);
+            if (isSelected) {
+                adminSeatContext.selected = adminSeatContext.selected.filter(s => s !== seatNumber);
+            } else {
+                if (adminSeatContext.selected.length >= adminSeatContext.required) {
+                    alert(`Maksimal ${adminSeatContext.required} kursi untuk booking ini.`);
+                    return;
+                }
+                if (adminSeatContext.occupiedSnapshot.includes(seatNumber)) {
+                    // Allow overriding occupied if it belongs to this booking
+                    // If needed, block with alert; for now allow selection
+                }
+                adminSeatContext.selected.push(seatNumber);
+            }
+
+            document.getElementById('adminSelectedSeats').textContent = adminSeatContext.selected.length ? adminSeatContext.selected.join(', ') : '-';
+            renderAdminSeatMap();
+        }
+
+        document.getElementById('adminSaveSeats').addEventListener('click', () => {
+            if (!adminSeatContext.bookingId) return;
+            const booking = bookings.find(b => b.id === adminSeatContext.bookingId);
+            if (!booking) return;
+            if (adminSeatContext.selected.length !== adminSeatContext.required) {
+                alert(`Pilih ${adminSeatContext.required} kursi sebelum menyimpan.`);
+                return;
+            }
+
+            booking.seats = adminSeatContext.selected.slice();
+            if (booking.passengers && booking.passengers.length) {
+                for (let i = 0; i < booking.passengers.length; i++) {
+                    booking.passengers[i].seat = booking.seats[i];
+                }
+            }
+
+            // Update occupied seats: remove previously assigned seats of this booking, then add new ones
+            const previousSeats = adminSeatContext.occupiedSnapshot.filter(s => booking.seats && booking.seats.includes(s));
+            occupiedSeats = occupiedSeats.filter(s => !previousSeats.includes(s));
+            occupiedSeats = occupiedSeats.concat(booking.seats);
+
+            document.getElementById('adminSeatModal').classList.add('hidden');
+            showNotification('Kursi berhasil diperbarui');
+            loadBookingsTable();
+        });
 
         function loadRoutesGrid() {
             const grid = document.getElementById('routesGrid');
