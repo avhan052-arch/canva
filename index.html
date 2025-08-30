@@ -2351,6 +2351,8 @@
         function login(username, role) {
             currentUser = username;
             currentRole = role;
+            // persist auth
+            try { localStorage.setItem('auth', JSON.stringify({ username, role })); } catch (e) {}
             
             // Hide login modal and button
             loginModal.classList.add('hidden');
@@ -2394,6 +2396,7 @@
         function logout() {
             currentUser = null;
             currentRole = null;
+            try { localStorage.removeItem('auth'); } catch (e) {}
             
             // Show login button
             loginBtn.classList.remove('hidden');
@@ -2966,6 +2969,8 @@
             const port = isEdit ? ports.find(p => p.id === portId) : { name: '', code: '', city: '', active: true };
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+            const activePorts = ports.filter(p => p.active).map(p => p.name);
+            const portOptions = ['<option value="">Pilih Pelabuhan</option>'].concat(activePorts.map(n => `<option value="${n}">${n}</option>`)).join('');
             modal.innerHTML = `
                 <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
                     <h2 class="text-2xl font-bold text-center mb-6">${isEdit ? 'Edit' : 'Tambah'} Pelabuhan</h2>
@@ -3683,31 +3688,11 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Dari Pelabuhan</label>
-                            <select id="routeFrom" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-                                <option value="">Pilih Pelabuhan</option>
-                                <option value="Jakarta">Jakarta</option>
-                                <option value="Surabaya">Surabaya</option>
-                                <option value="Bali">Bali</option>
-                                <option value="Lombok">Lombok</option>
-                                <option value="Makassar">Makassar</option>
-                                <option value="Medan">Medan</option>
-                                <option value="Batam">Batam</option>
-                                <option value="Pontianak">Pontianak</option>
-                            </select>
+                            <select id="routeFrom" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">${portOptions}</select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Ke Pelabuhan</label>
-                            <select id="routeTo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-                                <option value="">Pilih Pelabuhan</option>
-                                <option value="Jakarta">Jakarta</option>
-                                <option value="Surabaya">Surabaya</option>
-                                <option value="Bali">Bali</option>
-                                <option value="Lombok">Lombok</option>
-                                <option value="Makassar">Makassar</option>
-                                <option value="Medan">Medan</option>
-                                <option value="Batam">Batam</option>
-                                <option value="Pontianak">Pontianak</option>
-                            </select>
+                            <select id="routeTo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">${portOptions}</select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Jarak (km)</label>
@@ -5188,6 +5173,16 @@
             // Rehydrate ports and refresh selects on load
             ports = loadFromStorage('ports', ports);
             refreshAllPortSelects();
+            // Restore auth session if present
+            try {
+                const rawAuth = localStorage.getItem('auth');
+                if (rawAuth) {
+                    const auth = JSON.parse(rawAuth);
+                    if (auth && auth.username && auth.role) {
+                        login(auth.username, auth.role);
+                    }
+                }
+            } catch (e) {}
             loadPublicSchedule();
             setupSearchFilters();
             
