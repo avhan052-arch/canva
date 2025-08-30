@@ -150,6 +150,11 @@
                     <p class="text-sm text-gray-600">Kursi terpilih: <span id="adminSelectedSeats" class="font-semibold">-</span></p>
                     <p class="text-xs text-gray-500 mt-1">Pilih kursi sesuai jumlah penumpang (<span id="adminRequiredSeats">0</span>)</p>
                 </div>
+                <div id="adminSeatChips" class="flex flex-wrap gap-2 justify-center mt-3"></div>
+                <div class="flex justify-center gap-3 mt-4">
+                    <button onclick="adminAddSeatRow()" class="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 transition"><i class="fas fa-plus mr-1"></i>Tambah Kursi</button>
+                    <button onclick="adminDecreaseSeatRow()" class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 transition"><i class="fas fa-minus mr-1"></i>Kurangi Kursi</button>
+                </div>
             </div>
 
             <div class="flex space-x-4">
@@ -2949,6 +2954,7 @@
             document.getElementById('adminSelectedSeats').textContent = adminSeatContext.selected.length ? adminSeatContext.selected.join(', ') : '-';
 
             renderAdminSeatMap();
+            renderAdminSeatChips();
             document.getElementById('adminSeatModal').classList.remove('hidden');
         }
 
@@ -2997,6 +3003,42 @@
 
             document.getElementById('adminSelectedSeats').textContent = adminSeatContext.selected.length ? adminSeatContext.selected.join(', ') : '-';
             renderAdminSeatMap();
+            renderAdminSeatChips();
+        }
+
+        function renderAdminSeatChips() {
+            const chips = document.getElementById('adminSeatChips');
+            chips.innerHTML = '';
+            adminSeatContext.selected.forEach(seat => {
+                const chip = document.createElement('div');
+                chip.className = 'inline-flex items-center bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs';
+                chip.innerHTML = `<span class="font-mono mr-2">${seat}</span><button class="text-red-600 hover:text-red-800" aria-label="Hapus" title="Hapus" onclick="adminRemoveSeat('${seat}')"><i class="fas fa-times"></i></button>`;
+                chips.appendChild(chip);
+            });
+        }
+
+        function adminRemoveSeat(seat) {
+            adminSeatContext.selected = adminSeatContext.selected.filter(s => s !== seat);
+            document.getElementById('adminSelectedSeats').textContent = adminSeatContext.selected.length ? adminSeatContext.selected.join(', ') : '-';
+            renderAdminSeatMap();
+            renderAdminSeatChips();
+        }
+
+        function adminAddSeatRow() {
+            adminSeatContext.required += 1;
+            document.getElementById('adminRequiredSeats').textContent = adminSeatContext.required;
+        }
+
+        function adminDecreaseSeatRow() {
+            if (adminSeatContext.required <= 1) return;
+            adminSeatContext.required -= 1;
+            if (adminSeatContext.selected.length > adminSeatContext.required) {
+                adminSeatContext.selected = adminSeatContext.selected.slice(0, adminSeatContext.required);
+            }
+            document.getElementById('adminRequiredSeats').textContent = adminSeatContext.required;
+            document.getElementById('adminSelectedSeats').textContent = adminSeatContext.selected.length ? adminSeatContext.selected.join(', ') : '-';
+            renderAdminSeatMap();
+            renderAdminSeatChips();
         }
 
         document.getElementById('adminSaveSeats').addEventListener('click', () => {
@@ -3011,8 +3053,14 @@
             booking.seats = adminSeatContext.selected.slice();
             if (booking.passengers && booking.passengers.length) {
                 for (let i = 0; i < booking.passengers.length; i++) {
-                    booking.passengers[i].seat = booking.seats[i];
+                    booking.passengers[i].seat = booking.seats[i] || null;
                 }
+            }
+
+            // Reflect potential change in ticket count (CRUD on seats)
+            booking.tickets = adminSeatContext.required;
+            if (booking.passengers && booking.passengers.length > adminSeatContext.required) {
+                booking.passengers = booking.passengers.slice(0, adminSeatContext.required);
             }
 
             // Update occupied seats: remove previously assigned seats of this booking, then add new ones
