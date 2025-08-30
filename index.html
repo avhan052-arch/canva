@@ -5185,6 +5185,9 @@
 
         // Load public schedule on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Rehydrate ports and refresh selects on load
+            ports = loadFromStorage('ports', ports);
+            refreshAllPortSelects();
             loadPublicSchedule();
             setupSearchFilters();
             
