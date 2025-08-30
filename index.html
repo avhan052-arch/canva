@@ -1351,7 +1351,7 @@
                 <button id="confirmBooking" class="flex-1 gradient-bg text-white py-3 rounded-lg font-medium hover:opacity-90 transition">
                     <i class="fas fa-credit-card mr-2"></i>Lanjut ke Pembayaran
                 </button>
-                <button id="cancelBooking" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition">
+                <button id="cancelBooking" onclick="document.getElementById('bookingModal').classList.add('hidden')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition">
                     <i class="fas fa-times mr-2"></i>Batal
                 </button>
             </div>
@@ -1373,7 +1373,7 @@
                 <button id="confirmSeatSelection" class="gradient-bg text-white px-6 py-2 rounded-lg font-medium hover:opacity-90 transition">
                     Konfirmasi Pilihan
                 </button>
-                <button id="cancelSeatSelection" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-400 transition">
+                <button id="cancelSeatSelection" onclick="document.getElementById('seatModal').classList.add('hidden')" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-400 transition">
                     Batal
                 </button>
             </div>
@@ -1468,7 +1468,7 @@
                 <button id="processPayment" class="flex-1 gradient-bg text-white py-3 rounded-lg font-medium hover:opacity-90 transition">
                     <i class="fas fa-lock mr-2"></i>Bayar Sekarang
                 </button>
-                <button id="cancelPayment" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition">
+                <button id="cancelPayment" onclick="document.getElementById('paymentModal').classList.add('hidden')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition">
                     Batal
                 </button>
             </div>
@@ -1498,7 +1498,7 @@
                 </div>
                 <div class="flex space-x-4">
                     <button id="saveFerry" class="flex-1 gradient-bg text-white py-2 rounded-lg font-medium hover:opacity-90 transition">Simpan</button>
-                    <button id="cancelFerry" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-400 transition">Batal</button>
+                    <button id="cancelFerry" onclick="document.getElementById('ferryModal').classList.add('hidden')" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-400 transition">Batal</button>
                 </div>
             </div>
         </div>
