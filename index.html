@@ -1740,8 +1740,22 @@
         let selectedSeats = [];
         let notifications = [];
 
-        // Sample Data
-        let ferries = [
+        // Storage Helpers
+        function saveToStorage(key, value) {
+            try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { console.error('localStorage save error', key, e); }
+        }
+        function loadFromStorage(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : fallback;
+            } catch (e) {
+                console.error('localStorage load error', key, e);
+                return fallback;
+            }
+        }
+
+        // Sample Data with localStorage hydration
+        let ferries = loadFromStorage('ferries', [
             { id: 1, name: 'Nusantara Express', capacity: 200, status: 'active', route: 'Jakarta - Bali', price: 30000, departure: '08:00', arrival: '14:00', facilities: ['wifi', 'meal', 'ac'], class: 'business' },
             { id: 2, name: 'Bahari Jaya', capacity: 150, status: 'active', route: 'Surabaya - Lombok', price: 30000, departure: '10:00', arrival: '15:00', facilities: ['wifi', 'ac'], class: 'economy' },
             { id: 3, name: 'Samudra Indah', capacity: 180, status: 'maintenance', route: 'Bali - Lombok', price: 30000, departure: '12:00', arrival: '16:00', facilities: ['ac'], class: 'economy' },
@@ -1749,9 +1763,9 @@
             { id: 5, name: 'Ocean Liner', capacity: 300, status: 'active', route: 'Bali - Jakarta', price: 30000, departure: '20:00', arrival: '06:00', facilities: ['wifi', 'meal', 'ac'], class: 'vip' },
             { id: 6, name: 'Maritim Express', capacity: 250, status: 'active', route: 'Makassar - Bali', price: 30000, departure: '07:00', arrival: '13:00', facilities: ['wifi', 'ac'], class: 'business' },
             { id: 7, name: 'Archipelago Star', capacity: 180, status: 'active', route: 'Medan - Jakarta', price: 30000, departure: '19:00', arrival: '07:00', facilities: ['wifi', 'meal', 'ac'], class: 'vip' }
-        ];
+        ]);
 
-        let bookings = [
+        let bookings = loadFromStorage('bookings', [
             { 
                 id: 'BK001', 
                 passenger: 'John Doe', 
@@ -1823,41 +1837,41 @@
                     { name: 'Alice Brown', id: '3501234567890129', birthdate: '1995-09-12', gender: 'female', seat: 'D10', barcode: 'FB004-01-240118-OL-BJ' }
                 ]
             }
-        ];
+        ]);
 
-        let routes = [
+        let routes = loadFromStorage('routes', [
             { id: 1, from: 'Jakarta', to: 'Bali', distance: '1200 km', duration: '6 jam', price: 30000, active: true },
             { id: 2, from: 'Surabaya', to: 'Lombok', distance: '800 km', duration: '5 jam', price: 30000, active: true },
             { id: 3, from: 'Bali', to: 'Lombok', distance: '400 km', duration: '4 jam', price: 30000, active: true },
             { id: 4, from: 'Jakarta', to: 'Surabaya', distance: '600 km', duration: '9 jam', price: 30000, active: true },
             { id: 5, from: 'Makassar', to: 'Bali', distance: '500 km', duration: '6 jam', price: 30000, active: true },
             { id: 6, from: 'Medan', to: 'Jakarta', distance: '1400 km', duration: '12 jam', price: 30000, active: true }
-        ];
+        ]);
 
-        let passengers = [
+        let passengers = loadFromStorage('passengers', [
             { id: 1, name: 'John Doe', email: 'john@example.com', phone: '+62812345678', totalTrips: 5, status: 'active', joinDate: '2023-06-15' },
             { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '+62812345679', totalTrips: 3, status: 'active', joinDate: '2023-08-20' },
             { id: 3, name: 'Bob Wilson', email: 'bob@example.com', phone: '+62812345680', totalTrips: 8, status: 'vip', joinDate: '2023-03-10' },
             { id: 4, name: 'Alice Brown', email: 'alice@example.com', phone: '+62812345681', totalTrips: 2, status: 'active', joinDate: '2023-11-05' }
-        ];
+        ]);
 
-        let staff = [
+        let staff = loadFromStorage('staff', [
             { id: 1, name: 'Ahmad Suryadi', position: 'Kapten', ferry: 'Nusantara Express', status: 'active', experience: '15 tahun' },
             { id: 2, name: 'Siti Nurhaliza', position: 'Pramugari', ferry: 'Bahari Jaya', status: 'active', experience: '8 tahun' },
             { id: 3, name: 'Budi Santoso', position: 'Engineer', ferry: 'Pelni Star', status: 'active', experience: '12 tahun' },
             { id: 4, name: 'Maya Sari', position: 'Customer Service', ferry: 'All Ferries', status: 'active', experience: '5 tahun' }
-        ];
+        ]);
 
-        let favoriteRoutes = [
+        let favoriteRoutes = loadFromStorage('favoriteRoutes', [
             { id: 1, from: 'Jakarta', to: 'Bali', frequency: 12, lastUsed: '2024-01-10' },
             { id: 2, from: 'Surabaya', to: 'Lombok', frequency: 8, lastUsed: '2024-01-05' }
-        ];
+        ]);
 
-        let travelHistory = [
+        let travelHistory = loadFromStorage('travelHistory', [
             { id: 1, ferry: 'Nusantara Express', route: 'Jakarta - Bali', date: '2023-12-15', status: 'completed', rating: 5 },
             { id: 2, ferry: 'Bahari Jaya', route: 'Surabaya - Lombok', date: '2023-11-20', status: 'completed', rating: 4 },
             { id: 3, ferry: 'Pelni Star', route: 'Jakarta - Surabaya', date: '2023-10-10', status: 'completed', rating: 5 }
-        ];
+        ]);
 
         // DOM Elements
         const loginBtn = document.getElementById('loginBtn');
@@ -2518,9 +2532,11 @@
             };
 
             bookings.push(newBooking);
+            saveToStorage('bookings', bookings);
             
             // Add selected seats to occupied seats
             occupiedSeats = occupiedSeats.concat(selectedSeats);
+            saveToStorage('occupiedSeats', occupiedSeats);
             
             let bookingDetails = `Pemesanan berhasil!\n\n`;
             bookingDetails += `ID Booking: ${bookingId}\n`;
@@ -2871,7 +2887,7 @@
         }
 
         // Seats Admin Page Logic
-        let seatsMetaByFerry = {};
+        let seatsMetaByFerry = loadFromStorage('seatsMetaByFerry', {});
 
         function ensureSeatMetaForFerry(ferryName) {
             if (!seatsMetaByFerry[ferryName]) {
@@ -3018,6 +3034,7 @@
                 if (idx !== -1) meta.splice(idx, 1);
             }
 
+            saveToStorage('seatsMetaByFerry', seatsMetaByFerry);
             renderSeatsAdminMap(ferryName);
             renderSeatList(ferryName);
             showNotification('Data kursi tersimpan');
@@ -3280,6 +3297,9 @@
             occupiedSeats = occupiedSeats.filter(s => !previousSeats.includes(s));
             occupiedSeats = occupiedSeats.concat(booking.seats);
 
+            saveToStorage('bookings', bookings);
+            saveToStorage('occupiedSeats', occupiedSeats);
+
             document.getElementById('adminSeatModal').classList.add('hidden');
             showNotification('Kursi berhasil diperbarui');
             loadBookingsTable();
@@ -3319,6 +3339,7 @@
                 const index = ferries.findIndex(f => f.id === ferryId);
                 if (index > -1) {
                     ferries.splice(index, 1);
+                    saveToStorage('ferries', ferries);
                     loadFerriesTable();
                     updateStats();
                     loadPublicSchedule(); // Refresh public schedule
@@ -3343,6 +3364,7 @@
                 ferry.name = name;
                 ferry.capacity = parseInt(capacity);
                 ferry.status = status;
+                saveToStorage('ferries', ferries);
                 showNotification('Ferry berhasil diperbarui!');
             } else {
                 // Add new ferry
@@ -3359,6 +3381,7 @@
                     class: 'economy'
                 };
                 ferries.push(newFerry);
+                saveToStorage('ferries', ferries);
                 showNotification('Ferry baru berhasil ditambahkan!');
             }
 
@@ -3402,6 +3425,7 @@
                 const index = routes.findIndex(r => r.id === routeId);
                 if (index > -1) {
                     routes.splice(index, 1);
+                    saveToStorage('routes', routes);
                     loadRoutesGrid();
                 }
             }
@@ -3476,6 +3500,7 @@
                 const index = staff.findIndex(s => s.id === staffId);
                 if (index > -1) {
                     staff.splice(index, 1);
+                    saveToStorage('staff', staff);
                     loadStaffGrid();
                 }
             }
@@ -3567,6 +3592,7 @@
             };
 
             routes.push(newRoute);
+            saveToStorage('routes', routes);
             closeRouteModal();
             loadRoutesGrid();
             showNotification('Rute baru berhasil ditambahkan!');
@@ -3650,6 +3676,7 @@
             };
 
             staff.push(newStaff);
+            saveToStorage('staff', staff);
             closeStaffModal();
             loadStaffGrid();
             showNotification('Staff baru berhasil ditambahkan!');
@@ -3929,6 +3956,8 @@
                     if (booking.seats) {
                         occupiedSeats = occupiedSeats.filter(seat => !booking.seats.includes(seat));
                     }
+                    saveToStorage('bookings', bookings);
+                    saveToStorage('occupiedSeats', occupiedSeats);
                     
                     loadBookingsTable();
                     updateStats();
@@ -4154,7 +4183,7 @@
         });
 
         // Seat Management
-        let occupiedSeats = ['A1', 'A5', 'B3', 'C7', 'D2', 'E8', 'F4', 'G6', 'H1', 'I9']; // Sample occupied seats
+        let occupiedSeats = loadFromStorage('occupiedSeats', ['A1', 'A5', 'B3', 'C7', 'D2', 'E8', 'F4', 'G6', 'H1', 'I9']);
 
         function generateSeatMap() {
             const seatMap = document.getElementById('seatMap');
