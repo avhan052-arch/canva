@@ -267,7 +267,6 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rute</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keberangkatan</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiba</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                             </tr>
@@ -1624,6 +1623,16 @@
                         <option value="">Pilih Rute</option>
                         ${routes.map(r => `<option value="${r.from} - ${r.to}">${r.from} - ${r.to}</option>`).join('')}
                     </select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Keberangkatan</label>
+                        <input type="time" id="ferryDeparture" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tiba</label>
+                        <input type="time" id="ferryArrival" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                    </div>
                 </div>
                 <div class="flex space-x-4">
                     <button id="saveFerry" class="flex-1 gradient-bg text-white py-2 rounded-lg font-medium hover:opacity-90 transition">Simpan</button>
@@ -3507,6 +3516,10 @@
                 sel.innerHTML = '<option value="">Pilih Rute</option>' + routes.map(r => `<option value="${r.from} - ${r.to}">${r.from} - ${r.to}</option>`).join('');
                 if (current) sel.value = current;
             }
+            const dep = document.getElementById('ferryDeparture');
+            const arr = document.getElementById('ferryArrival');
+            if (dep) dep.value = ferry.departure || '08:00';
+            if (arr) arr.value = ferry.arrival || '14:00';
             document.getElementById('ferryModal').classList.remove('hidden');
         }
 
@@ -3533,6 +3546,8 @@
             const status = document.getElementById('ferryStatus').value;
             const routeSel = document.getElementById('ferryRouteSelect');
             const selectedRoute = routeSel ? routeSel.value : '';
+            const dep = document.getElementById('ferryDeparture')?.value || '08:00';
+            const arr = document.getElementById('ferryArrival')?.value || '14:00';
 
             if (!name || !capacity) {
                 alert('Mohon lengkapi semua field!');
@@ -3546,6 +3561,8 @@
                 ferry.capacity = parseInt(capacity);
                 ferry.status = status;
                 if (selectedRoute) ferry.route = selectedRoute;
+                ferry.departure = dep;
+                ferry.arrival = arr;
                 saveToStorage('ferries', ferries);
                 showNotification('Ferry berhasil diperbarui!');
             } else {
@@ -3557,8 +3574,8 @@
                     status: status,
                     route: selectedRoute || 'Jakarta - Bali',
                     price: 30000, // Default price
-                    departure: '08:00',
-                    arrival: '14:00',
+                    departure: dep,
+                    arrival: arr,
                     facilities: ['wifi', 'ac'],
                     class: 'economy'
                 };
@@ -4496,10 +4513,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             ${ferry.arrival}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-bold text-purple-600">Rp ${ferry.price.toLocaleString()}</div>
-                            <div class="text-xs text-gray-500">per orang</div>
-                        </td>
+                        
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
                                 ${statusText}
@@ -4625,10 +4639,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 ${ferry.arrival}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-bold text-purple-600">Rp ${ferry.price.toLocaleString()}</div>
-                                <div class="text-xs text-gray-500">per orang</div>
-                            </td>
+                            
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
                                     ${statusText}
