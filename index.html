@@ -1619,6 +1619,13 @@
                         <option value="inactive">Tidak Aktif</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rute</label>
+                    <select id="ferryRouteSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="">Pilih Rute</option>
+                        ${routes.map(r => `<option value="${r.from} - ${r.to}">${r.from} - ${r.to}</option>`).join('')}
+                    </select>
+                </div>
                 <div class="flex space-x-4">
                     <button id="saveFerry" class="flex-1 gradient-bg text-white py-2 rounded-lg font-medium hover:opacity-90 transition">Simpan</button>
                     <button id="cancelFerry" onclick="document.getElementById('ferryModal').classList.add('hidden')" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-400 transition">Batal</button>
@@ -3495,6 +3502,13 @@
             document.getElementById('ferryName').value = ferry.name;
             document.getElementById('ferryCapacity').value = ferry.capacity;
             document.getElementById('ferryStatus').value = ferry.status;
+            // Populate route select from latest routes
+            const sel = document.getElementById('ferryRouteSelect');
+            if (sel) {
+                const current = ferry.route || '';
+                sel.innerHTML = '<option value="">Pilih Rute</option>' + routes.map(r => `<option value="${r.from} - ${r.to}">${r.from} - ${r.to}</option>`).join('');
+                if (current) sel.value = current;
+            }
             document.getElementById('ferryModal').classList.remove('hidden');
         }
 
@@ -3519,6 +3533,8 @@
             const name = document.getElementById('ferryName').value;
             const capacity = document.getElementById('ferryCapacity').value;
             const status = document.getElementById('ferryStatus').value;
+            const routeSel = document.getElementById('ferryRouteSelect');
+            const selectedRoute = routeSel ? routeSel.value : '';
 
             if (!name || !capacity) {
                 alert('Mohon lengkapi semua field!');
@@ -3531,6 +3547,7 @@
                 ferry.name = name;
                 ferry.capacity = parseInt(capacity);
                 ferry.status = status;
+                if (selectedRoute) ferry.route = selectedRoute;
                 saveToStorage('ferries', ferries);
                 showNotification('Ferry berhasil diperbarui!');
             } else {
@@ -3540,7 +3557,7 @@
                     name: name,
                     capacity: parseInt(capacity),
                     status: status,
-                    route: 'Jakarta - Bali', // Default route
+                    route: selectedRoute || 'Jakarta - Bali',
                     price: 30000, // Default price
                     departure: '08:00',
                     arrival: '14:00',
