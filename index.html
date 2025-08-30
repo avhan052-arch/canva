@@ -823,7 +823,7 @@
                 </div>
 
                 <!-- Bookings Management -->
-                <div id="bookingsTab" class="admin-content p-6 hidden">
+                <div id="adminBookingsTab" class="admin-content p-6 hidden">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-xl font-bold text-gray-800">Kelola Pemesanan</h3>
                         <div class="flex space-x-2">
@@ -1818,7 +1818,7 @@
         // User Tabs
         document.querySelectorAll('.user-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
-                const tabName = e.target.dataset.tab;
+                const tabName = e.currentTarget.dataset.tab;
                 switchUserTab(tabName);
             });
         });
@@ -2131,7 +2131,7 @@
         // Admin Tabs
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
-                const tabName = e.target.dataset.tab;
+                const tabName = e.currentTarget.dataset.tab;
                 switchAdminTab(tabName);
             });
         });
@@ -2744,7 +2744,12 @@
                 content.classList.add('hidden');
             });
             
-            document.getElementById(`${tabName}Tab`).classList.remove('hidden');
+            const targetContent = tabName === 'bookings'
+                ? document.getElementById('adminBookingsTab')
+                : document.getElementById(`${tabName}Tab`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
 
             // Load specific data
             if (tabName === 'ferries') {
