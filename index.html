@@ -104,7 +104,7 @@
                             </div>
                         </div>
                     </div>
-                    <button id="loginBtn" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
+                    <button id="loginBtn" onclick="document.getElementById('loginModal').classList.remove('hidden')" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
                         <i class="fas fa-sign-in-alt mr-2"></i>Login
                     </button>
                 </div>
@@ -149,7 +149,7 @@
                 </div>
                 <div class="flex space-x-4">
                     <button id="loginSubmit" class="flex-1 gradient-bg text-white py-2 rounded-lg font-medium hover:opacity-90 transition">Login</button>
-                    <button id="loginCancel" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-400 transition">Batal</button>
+                    <button id="loginCancel" onclick="document.getElementById('loginModal').classList.add('hidden')" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-400 transition">Batal</button>
                 </div>
             </div>
         </div>
