@@ -722,6 +722,9 @@
                         <button class="admin-tab py-4 px-1 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="staff">
                             <i class="fas fa-user-tie mr-2"></i>Staff
                         </button>
+                        <button class="admin-tab py-4 px-1 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="seats">
+                            <i class="fas fa-chair mr-2"></i>Kursi
+                        </button>
                         <button class="admin-tab py-4 px-1 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="reports">
                             <i class="fas fa-chart-bar mr-2"></i>Laporan
                         </button>
@@ -1011,6 +1014,60 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="staffGrid"></div>
                 </div>
 
+                <!-- Seats Management -->
+                <div id="seatsTab" class="admin-content p-6 hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">Kelola Kursi</h3>
+                        <div class="flex gap-2">
+                            <select id="seatFerryFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="">Semua Ferry</option>
+                            </select>
+                            <button id="resetSeatFilter" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white rounded-xl shadow p-6">
+                            <h4 class="font-semibold text-gray-800 mb-4">Peta Kursi</h4>
+                            <div class="flex justify-center mb-4 text-sm text-gray-600">
+                                <div class="flex items-center mr-4"><div class="seat available mr-2"></div><span>Tersedia</span></div>
+                                <div class="flex items-center mr-4"><div class="seat selected mr-2"></div><span>Dipilih</span></div>
+                                <div class="flex items-center"><div class="seat occupied mr-2"></div><span>Terisi</span></div>
+                            </div>
+                            <div id="seatsAdminMap" class="grid grid-cols-12 gap-2 max-w-4xl mx-auto"></div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <h4 class="font-semibold text-gray-800 mb-4">Form Kursi</h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Kursi</label>
+                                    <input type="text" id="seatNumberInput" class="w-full px-3 py-2 border rounded-lg" placeholder="Contoh: A1">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                    <select id="seatStatusInput" class="w-full px-3 py-2 border rounded-lg">
+                                        <option value="available">Tersedia</option>
+                                        <option value="occupied">Terisi</option>
+                                        <option value="blocked">Diblokir</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                                    <input type="text" id="seatNoteInput" class="w-full px-3 py-2 border rounded-lg" placeholder="Opsional">
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="createSeatBtn" class="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition">Tambah</button>
+                                    <button id="updateSeatBtn" class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition">Perbarui</button>
+                                    <button id="deleteSeatBtn" class="flex-1 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition">Hapus</button>
+                                </div>
+                            </div>
+                            <hr class="my-6">
+                            <h4 class="font-semibold text-gray-800 mb-2">Daftar Kursi</h4>
+                            <div id="seatList" class="max-h-72 overflow-y-auto text-sm text-gray-700"></div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Reports -->
                 <div id="reportsTab" class="admin-content p-6 hidden">
                     <h3 class="text-xl font-bold text-gray-800 mb-6">Laporan & Analitik</h3>
@@ -2801,6 +2858,8 @@
                 loadPassengersTable();
             } else if (tabName === 'staff') {
                 loadStaffGrid();
+            } else if (tabName === 'seats') {
+                loadSeatsAdminPage();
             }
         }
 
@@ -2809,6 +2868,159 @@
             loadBookingsTable();
             updateStats();
             setupSearchFilters();
+        }
+
+        // Seats Admin Page Logic
+        let seatsMetaByFerry = {};
+
+        function ensureSeatMetaForFerry(ferryName) {
+            if (!seatsMetaByFerry[ferryName]) {
+                const rows = ['A','B','C','D','E','F','G','H','I','J'];
+                const list = [];
+                rows.forEach(r => {
+                    for (let c = 1; c <= 12; c++) {
+                        list.push({ number: `${r}${c}`, status: 'available', note: '' });
+                    }
+                });
+                seatsMetaByFerry[ferryName] = list;
+            }
+            return seatsMetaByFerry[ferryName];
+        }
+
+        function loadSeatsAdminPage() {
+            const ferrySelect = document.getElementById('seatFerryFilter');
+            if (ferrySelect && ferrySelect.options.length <= 1) {
+                const uniqueFerries = [...new Set(ferries.map(f => f.name))];
+                uniqueFerries.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    ferrySelect.appendChild(opt);
+                });
+            }
+            const selectedFerry = ferrySelect ? (ferrySelect.value || ferries[0]?.name || '') : '';
+            if (ferrySelect && selectedFerry) ferrySelect.value = selectedFerry;
+
+            renderSeatsAdminMap(selectedFerry);
+            renderSeatList(selectedFerry);
+
+            const resetBtn = document.getElementById('resetSeatFilter');
+            if (resetBtn) {
+                resetBtn.onclick = () => {
+                    if (ferrySelect) ferrySelect.value = '';
+                    const map = document.getElementById('seatsAdminMap');
+                    const list = document.getElementById('seatList');
+                    if (map) map.innerHTML = '';
+                    if (list) list.innerHTML = '<div class="text-gray-500">Pilih ferry untuk melihat kursi</div>';
+                };
+            }
+
+            if (ferrySelect) {
+                ferrySelect.onchange = () => {
+                    renderSeatsAdminMap(ferrySelect.value);
+                    renderSeatList(ferrySelect.value);
+                    clearSeatForm();
+                };
+            }
+
+            const createBtn = document.getElementById('createSeatBtn');
+            const updateBtn = document.getElementById('updateSeatBtn');
+            const deleteBtn = document.getElementById('deleteSeatBtn');
+            if (createBtn) createBtn.onclick = () => saveSeatRecord('create');
+            if (updateBtn) updateBtn.onclick = () => saveSeatRecord('update');
+            if (deleteBtn) deleteBtn.onclick = () => saveSeatRecord('delete');
+        }
+
+        function renderSeatsAdminMap(ferryName) {
+            const grid = document.getElementById('seatsAdminMap');
+            if (!grid) return;
+            grid.innerHTML = '';
+            if (!ferryName) return;
+            const meta = ensureSeatMetaForFerry(ferryName);
+
+            const rows = ['A','B','C','D','E','F','G','H','I','J'];
+            for (let r = 0; r < rows.length; r++) {
+                for (let c = 1; c <= 12; c++) {
+                    const number = `${rows[r]}${c}`;
+                    const seatDiv = document.createElement('div');
+                    seatDiv.className = 'seat';
+                    seatDiv.dataset.seat = number;
+                    seatDiv.textContent = number;
+
+                    const status = meta.find(s => s.number === number)?.status || 'available';
+                    if (status === 'occupied') seatDiv.classList.add('occupied');
+                    else if (status === 'blocked') { seatDiv.classList.add('occupied'); seatDiv.style.opacity = '0.5'; }
+                    else seatDiv.classList.add('available');
+
+                    seatDiv.onclick = () => selectSeatForForm(ferryName, number);
+                    grid.appendChild(seatDiv);
+                }
+            }
+        }
+
+        function renderSeatList(ferryName) {
+            const listDiv = document.getElementById('seatList');
+            if (!listDiv) return;
+            listDiv.innerHTML = '';
+            if (!ferryName) return;
+            const meta = ensureSeatMetaForFerry(ferryName);
+            meta.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between border-b py-2';
+                row.innerHTML = `<span class=\"font-mono\">${item.number}</span><span class=\"text-xs ${item.status==='available'?'text-green-600':item.status==='occupied'?'text-red-600':'text-gray-500'}\">${item.status}</span>`;
+                row.onclick = () => selectSeatForForm(ferryName, item.number);
+                listDiv.appendChild(row);
+            });
+        }
+
+        function selectSeatForForm(ferryName, number) {
+            const meta = ensureSeatMetaForFerry(ferryName);
+            const seat = meta.find(s => s.number === number) || { number, status: 'available', note: '' };
+            const num = document.getElementById('seatNumberInput');
+            const stat = document.getElementById('seatStatusInput');
+            const note = document.getElementById('seatNoteInput');
+            if (num) num.value = seat.number;
+            if (stat) stat.value = seat.status;
+            if (note) note.value = seat.note || '';
+        }
+
+        function clearSeatForm() {
+            const num = document.getElementById('seatNumberInput');
+            const stat = document.getElementById('seatStatusInput');
+            const note = document.getElementById('seatNoteInput');
+            if (num) num.value = '';
+            if (stat) stat.value = 'available';
+            if (note) note.value = '';
+        }
+
+        function saveSeatRecord(action) {
+            const ferrySelect = document.getElementById('seatFerryFilter');
+            const ferryName = ferrySelect ? ferrySelect.value : '';
+            if (!ferryName) { alert('Pilih ferry terlebih dahulu'); return; }
+            const numberInput = document.getElementById('seatNumberInput');
+            const statusInput = document.getElementById('seatStatusInput');
+            const noteInput = document.getElementById('seatNoteInput');
+            const number = (numberInput?.value || '').toUpperCase().trim();
+            const status = statusInput?.value || 'available';
+            const note = noteInput?.value || '';
+            if (!/^([A-J])(10|11|12|[1-9])$/.test(number)) { alert('Nomor kursi tidak valid (A1 - J12)'); return; }
+
+            const meta = ensureSeatMetaForFerry(ferryName);
+            const idx = meta.findIndex(s => s.number === number);
+
+            if (action === 'create') {
+                if (idx !== -1) { alert('Kursi sudah ada, gunakan Perbarui'); return; }
+                meta.push({ number, status, note });
+            } else if (action === 'update') {
+                if (idx === -1) { meta.push({ number, status, note }); }
+                else { meta[idx] = { number, status, note }; }
+            } else if (action === 'delete') {
+                if (idx !== -1) meta.splice(idx, 1);
+            }
+
+            renderSeatsAdminMap(ferryName);
+            renderSeatList(ferryName);
+            showNotification('Data kursi tersimpan');
         }
 
         function updateStats() {
